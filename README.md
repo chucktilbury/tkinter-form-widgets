@@ -1,4 +1,4 @@
-# tkinter-sqlite3
+# Form widgets for tkinter and sqlite3 
 This is a simple wrapper that allows tkinter form widgets to access a sqlite3 database to get and store values. Only widgets that present a value that can be stored in a database are presented. These widget classes are used exactly like a regular tkinter widget would be used, but with some extra parameters for database access.
 
 Only Python 3.x is supported. 
