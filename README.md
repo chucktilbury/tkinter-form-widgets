@@ -52,5 +52,12 @@ This is a wrapper for the tkinter.ttk Combobox widget. In the local table, an ID
 * rem_table -- This is the remote table where the data that will be displayed is located.
 * rem_column -- This is the column of the remote table.
 
+### formCheckbox
+This is a wrapper for the tkinter Checkbox class. The check box represents a boolean value in the database. 
+
+##### Additional parameters
+* table -- This is the table that the data for this widget is in.
+* column -- This is the column of the table.
+
 
 
