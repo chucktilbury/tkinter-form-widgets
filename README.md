@@ -59,5 +59,8 @@ This is a wrapper for the tkinter Checkbox class. The check box represents a boo
 * table -- This is the table that the data for this widget is in.
 * column -- This is the column of the table.
 
+### formTitle
+This is a wrapper for the Label tkinter class. It provides a way to add enlarged text to a form without having to think about the font size, etc.
 
-
+##### Additional parameters
+none
