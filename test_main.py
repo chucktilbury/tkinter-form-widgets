@@ -15,26 +15,59 @@ class TestForm(Forms):
         '''
         Create some widgets.
         '''
-        super().__init__(owner, 'table', columns=4)
-        self.add_title('Test Title')
-        self.add_label('test')
-        self.add_entry('col', 3, str, width=51)
-        #self.add_spacer(1)
+        super().__init__(owner, 'Contact', columns=4)
+
+        self.width1 = 50
+        self.width2 = 20
+        self.add_title('Contacts')
+        self.add_label('Name:')
+        self.add_entry('name', 3, str, width=self.width1)
         #self.add_spacer(1)
 
-        self.add_label('test two')
-        self.add_entry('col', 1, str)
+        self.add_label('Address1:')
+        self.add_entry('address1', 3, str, width=self.width1)
         #self.add_spacer(1)
 
-        self.add_label('test three')
-        self.add_entry('col', 1, str)
+        self.add_label('Address2:')
+        self.add_entry('address2', 3, str, width=self.width1)
         #self.add_spacer(1)
+
+        self.add_label('City:')
+        self.add_entry('city', 1, str, width=self.width2)
+        #self.add_spacer(1)
+
+        self.add_label('State:')
+        self.add_entry('state', 1, str, width=self.width2)
+        #self.add_spacer(1)
+
+        self.add_label('Post Code:')
+        self.add_entry('zip', 1, str, width=self.width2)
+
+        self.add_label('Country:')
+        self.add_entry('country', 1, str, width=self.width2)
+
+        self.add_label('Email:')
+        self.add_entry('email_address', 1, str, width=self.width2)
+        self.add_spacer(1)
+        self.add_spacer(1)
+
+        self.add_label('Phone:')
+        self.add_entry('phone_number', 1, str, width=self.width2)
+        self.add_spacer(1)
+        self.add_spacer(1)
+
+        self.add_label('Web Site:')
+        self.add_entry('web_site', 3, str, width=self.width1)
+
+        self.add_label('Description:')
+        self.add_text('description', 3, width=self.width1+4, height=20)
 
         self.add_ctl_button('Next')
         self.add_ctl_button('Prev')
         self.add_btn_spacer()
         self.add_ctl_button('Save')
         self.add_ctl_button('Edit', class_name=Eclass)
+        self.load_form()
 
 class Main(object):
 

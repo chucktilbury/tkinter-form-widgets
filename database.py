@@ -3,6 +3,8 @@ This is a stub for the database. It exists to allow the formWidgets to be tested
 database functionality in this file, but it does provide a template for implementing a real database
 that interfaces to the form widgets.
 '''
+import sqlite3 as sql
+import os, time, locale
 
 class Database(object):
 
@@ -22,11 +24,90 @@ class Database(object):
             raise Exception('The Database class is a singleton. Use get_instance() instead.')
 
         # put the stuff here to open the database file and all.
+        self.data_version = '1.0'
+        self.database_name = 'sql/testing.db'
+        self.db_create_file = 'sql/database.sql'
+        self.db_pop_file = 'sql/populate.sql'
+        self.open()
+        locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
+
+    def open(self):
+        '''
+        High level database open routine. Handles creating the database if it's not found.
+        '''
+        if not os.path.isfile(self.database_name):
+            self.create_database()
+
+        self.db = sql.connect(self.database_name)
+        self.db.row_factory = sql.Row
+
+    def close(self):
+        '''
+        Close the database after committing all of the changes.
+        '''
+        self.db.commit()
+        self.db.close()
+
+    def read_statement(self, fh):
+        '''
+        Read a statement from the *.sql file and return it. This skips comments and concatinates lines
+        until a ';' is read.
+
+        A comment is text that starts with a '#' and continues to the end of the line.
+        '''
+        retv = ''
+        for line in fh:
+            # strip comments from the line
+            idx = line.find('#')
+            line = line[0:idx].strip()
+            # If there is anything left, append it to the return value.
+            if len(line) > 0:
+                retv += " %s"%(line)
+                if line[-1] == ';':
+                    break
+
+        return retv
+
+    def run_file(self, db, name):
+        '''
+        Execute all of the statements in a *.sql file.
+        '''
+        with open(name) as fh:
+            while True:
+                line = self.read_statement(fh)
+                if len(line) > 0:
+                    db.execute(line)
+                else:
+                    break
+
+    def create_database(self):
+        '''
+        Create the database if it does not exist already.
+        '''
+        # Load the DB creation file and create the database from that.
+
+        c = sql.connect(self.database_name)
+        db = c.cursor()
+        self.run_file(db, self.db_create_file)
+        self.run_file(db, self.db_pop_file)
+        c.commit()
+        c.close()
 
     def commit(self):
         '''
         Commit all changes to the database.
         '''
+        self.db.commit()
+
+    def execute(self, sql, data = None):
+        '''
+        Execute a single SQL statement.
+        '''
+        #print('execute: sql = %s, data = %s'%(sql, str(data)))
+        if data is None:
+            return self.db.execute(sql)
+        else:
+            return self.db.execute(sql, data)
 
     def read_single_value(self, table, column, row_id):
         '''
@@ -93,11 +174,10 @@ class Database(object):
         else:
             sql = 'SELECT ID FROM %s WHERE %s;'%(table, where)
         cur = self.execute(sql)
-        #for item in cur:
-        #    retv.append(item[0])
+        for item in cur:
+            retv.append(item[0])
 
-        #return retv
-        return [1, 2, 3, 4]
+        return retv
 
     def insert_row(self, table, data):
         '''
@@ -112,17 +192,9 @@ class Database(object):
         sql = 'INSERT INTO %s (%s) VALUES (%s);'%(table, keys, qmks)
         return self.db.execute(sql, vals).lastrowid
 
-    # There will be other functions needed to insert/update rows, delete rows and
-    # such, but they are not needed by the form widgets.
-
-    # These functions are stubs that would normally be in the database.
-    def execute(self, sql, data = None):
-        print('execute: sql = %s, data = %s'%(sql, str(data)))
-        return self
-
-    def fetchall(self):
-        print('fetchall()')
-        return ['x', 'y', 'z']
-
-    def commit(self):
-        print('commit()')
+    def delete_row(self, table, row_id):
+        '''
+        Delete the row with the given ID.
+        '''
+        sql = 'DELETE FROM %s WHERE ID = %d;' % (table, id)
+        return self.db.execute(sql)

@@ -40,11 +40,11 @@ class Forms(tk.LabelFrame):
         # screen factor is the width of a character. Used to convert between
         # pixels and dialog units.
         self.screen_factor = font.Font().measure('x')
-        print('measure', self.screen_factor)
+        #print('measure', self.screen_factor)
 
         # Form width in dialog units
         self.form_width = int(form_width / self.screen_factor)
-        print('form width', self.form_width)
+        #print('form width', self.form_width)
 
         # internal vars for laying out controls
         self.row = 0        # The current row that is being layed out
@@ -95,7 +95,7 @@ class Forms(tk.LabelFrame):
         This is the formEntry control.
         '''
         widget = formEntry(self.ctl_frame, self.table, column, _type, **kw)
-        self._grid(widget, cols)
+        self._grid(widget, cols, sticky='w')
         self.ctl_list.append(widget)
 
     def add_text(self, column, cols, **kw):
@@ -103,7 +103,7 @@ class Forms(tk.LabelFrame):
         This is the formText control.
         '''
         widget = formText(self.ctl_frame, self.table, column, **kw)
-        self._grid(widget, cols)
+        self._grid(widget, cols, sticky='w')
         self.ctl_list.append(widget)
 
     def add_combo(self, column, cols, pop_tab, pop_col, **kw):
@@ -111,7 +111,7 @@ class Forms(tk.LabelFrame):
         This is the formCombobox control.
         '''
         widget = formText(self.ctl_frame, self.table, column, pop_tab, pop_col, **kw)
-        self._grid(widget, cols)
+        self._grid(widget, cols, sticky='w')
         self.ctl_list.append(widget)
 
     def add_dynamic_label(self, column, cols, **kw):
@@ -119,7 +119,7 @@ class Forms(tk.LabelFrame):
         This is the formDynamicLabel control.
         '''
         widget = formDynamicLabel(self.ctl_frame, self.table, column, **kw)
-        self._grid(widget, cols)
+        self._grid(widget, cols, sticky='w')
         self.ctl_list.append(widget)
 
     def add_indirect_label(self, column, cols, rem_tab, rem_col, **kw):
@@ -127,7 +127,7 @@ class Forms(tk.LabelFrame):
         This is the formIndirectLabel control.
         '''
         widget = formIndirectLabel(self.ctl_frame, self.table, column, **kw)
-        self._grid(widget, cols)
+        self._grid(widget, cols, sticky='w')
         self.ctl_list.append(widget)
 
     def add_checkbox(self, column, cols, **kw):
@@ -135,7 +135,7 @@ class Forms(tk.LabelFrame):
         This is the formCheckbox control.
         '''
         widget = formCheckbox(self.ctl_frame, self.table, column, **kw)
-        self._grid(widget, cols)
+        self._grid(widget, cols, sticky='w')
         self.ctl_list.append(widget)
 
     def add_custom_widget(self, cols, cls, **kw):
@@ -143,7 +143,7 @@ class Forms(tk.LabelFrame):
         This is any widget that has a self-contained class.
         '''
         widget = cls(**kw)
-        self._grid(widget, cols)
+        self._grid(widget, cols, sticky='w')
         self.ctl_list.append(widget)
 
     def add_spacer(self, cols):
@@ -215,6 +215,7 @@ class Forms(tk.LabelFrame):
         for item in self.ctl_list:
             item.set_row_id(self._row_id())
             item.setter() # set the widget value
+            item.is_changed(True) # reset the changed flag
 
     def save_form(self, new_flag=False):
         '''
@@ -228,15 +229,16 @@ class Forms(tk.LabelFrame):
             self.data.insert_row(self.table, data)
             self._init_row_list()
             self.row_index = len(self.row_list)-1
-
-        if len(self.row_list) == 0:
-            showinfo('Records', 'There are no records to save for this form.')
-            return
         else:
-            for item in self.ctl_list:
-                item.set_row_id(self._row_id())
-                item.getter() # get the widget value
-
+            if len(self.row_list) == 0:
+                showinfo('Records', 'There are no records to save for this form.')
+                return
+            else:
+                for item in self.ctl_list:
+                    item.set_row_id(self._row_id())
+                    if item.is_changed(True):
+                        item.getter() # get the widget value
+        self.data.commit()
 
     def show_form(self):
         '''
@@ -257,42 +259,75 @@ class Forms(tk.LabelFrame):
         '''
         Get the next row in the table and load the form.
         '''
-        pass
+        for item in self.ctl_list:
+            if item.is_changed():
+                if askyesno('Save This?', 'There are changed fields. Do you want to save this record?'):
+                    self.save_form()
+                break
+
+        if not self.row_list is None:
+            self.row_index += 1
+            if self.row_index > len(self.row_list)-1:
+                self.row_index = len(self.row_list)-1
+                showinfo('Last Record', 'This is the last record.')
+            else:
+                self.load_form()
 
     def _prev_btn(self):
         '''
         Get the previous row in the database and load the form.
         '''
-        pass
+        for item in self.ctl_list:
+            if item.is_changed():
+                if askyesno('Save This?', 'There are changed fields. Do you want to save this record?'):
+                    self.save_form()
+                break
 
-    def _select_btn(self, column):
-        '''
-        Open the select dialog and select from the column in the row.
-        '''
-        pass
+        if not self.row_list is None:
+            self.row_index -= 1
+            if self.row_index < 0:
+                self.row_index = 0
+                showinfo('First Record', 'This is the first record.')
+            else:
+                self.load_form()
 
     def _clear_btn(self):
         '''
         Clear the form or open the edit dialog.
         '''
-        pass
+        for item in self.ctl_list:
+            item.clear()
 
     def _save_btn(self):
         '''
         Call all of the getter functions for all of the controls and
         commit the database changes.
         '''
-        self.save_form()
+        if askyesno('Save record?', 'Are you sure you want to save this?'):
+            self.save_form()
 
     def _delete_btn(self):
         '''
         Delete the current row from the database and load the next one.
         '''
-        pass
+        if askyesno('Delete record?', 'Are you sure you want to delete this?'):
+            self.data.delete_row(self.table, self.row_list[self.row_index])
+            self.data.commit()
+
+            self.row_list = self.data.get_id_list(self.table)
+            if self.row_index > len(self.row_list):
+                self.row_index -= 1
+            self.load_form()
 
     def _edit_btn(self, row_id, _class):
         '''
         Call up the edit dialog for this table row.
+        '''
+        pass
+
+    def _select_btn(self, column):
+        '''
+        Open the select dialog and select from the column in the row.
         '''
         pass
 
@@ -330,6 +365,7 @@ class Forms(tk.LabelFrame):
         '''
         Return the current row_id
         '''
+        #print('list:', self.row_list, 'index:', self.row_index)
         if self.row_list is None:
             return 0
         return self.row_list[self.row_index]
@@ -338,6 +374,7 @@ class Forms(tk.LabelFrame):
         '''
         Create the row list.
         '''
+        #print('init_row_list')
         if self.table is None:
             self.row_list = None # getting the row list might be deferred
         else:

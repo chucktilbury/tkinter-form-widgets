@@ -70,11 +70,14 @@ class _form_widget_base(tk.Frame):
         '''
         self.row_id = row_id
 
-    def is_changed(self):
+    def is_changed(self, clear_flag=False):
         '''
         Return whether the control has changed or not.
         '''
-        return self.changed
+        val = self.changed
+        if clear_flag:
+            self.changed = False
+        return val
 
     def _bind_key(self, event=None):
         '''
@@ -144,7 +147,7 @@ class formText(_form_widget_base):
         self.widget.config(xscrollcommand=self.hsb.set)
         self.hsb.grid(row=1, column=0, sticky='wes')
 
-        self.local_frame.grid(row=0, column=1, padx=self.padx, pady=self.pady, sticky='w')
+        self.local_frame.grid(row=0, column=1, sticky='w')
         self.widget.bind('<Key>', self._bind_key)
 
     def getter(self):
