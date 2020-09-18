@@ -1,0 +1,4 @@
+
+*   Check to see if the frame can be iterated with frame.children() and if it can,
+    then use that instead of keeping a separate list. If the frame stores the widget
+    class, then it can be used. If it only stored the control thn it cannot.

@@ -8,6 +8,8 @@ source code.
 '''
 import tkinter as tk
 import tkinter.ttk as ttk
+import tkinter.font as font
+from tkinter.messagebox import *
 from database import Database
 
 class _form_widget_base(tk.Frame):
@@ -23,6 +25,7 @@ class _form_widget_base(tk.Frame):
         self.table = table
         self.column = column
         self.row_id = None
+        self.changed = False
 
     def getter(self):
         '''
@@ -48,11 +51,36 @@ class _form_widget_base(tk.Frame):
         '''
         self.setter()
 
+    def get_insert_value(self):
+        '''
+        This is used when inserting a new row into the database.
+        '''
+        return self.column, self._read_value()
+
+    def _read_value(self):
+        '''
+        This is a "regular" way to obtain the value of a widget. This method must have an
+        override. It's not supported for fields that have no getter().
+        '''
+        raise Exception('The _read_value method not supported for this widget.')
+
     def set_row_id(self, row_id):
         '''
         This must be called before the value of the widget can be read or written.
         '''
         self.row_id = row_id
+
+    def is_changed(self):
+        '''
+        Return whether the control has changed or not.
+        '''
+        return self.changed
+
+    def _bind_key(self, event=None):
+        '''
+        Callback for key binding to detect if widget has changed.
+        '''
+        self.changed = True
 
 class formEntry(_form_widget_base):
     '''
@@ -66,9 +94,10 @@ class formEntry(_form_widget_base):
         self.value = tk.StringVar(self)
         self.widget = tk.Entry(self, textvariable=self.value, **kw)
         self.widget.grid()
+        self.widget.bind('<Key>', self._bind_key)
 
     def getter(self):
-        val = self._type(self.value.get())
+        val = self._read_value()
         self.data.write_single_value(self.table, self.column, self.row_id, val)
 
     def setter(self):
@@ -92,6 +121,9 @@ class formEntry(_form_widget_base):
         if state == 'readonly':
             self.widget.configure(state='readonly')
 
+    def _read_value(self):
+        return self._type(self.value.get())
+
 class formText(_form_widget_base):
 
     def __init__(self, owner, table, column, **kw):
@@ -113,9 +145,10 @@ class formText(_form_widget_base):
         self.hsb.grid(row=1, column=0, sticky='wes')
 
         self.local_frame.grid(row=0, column=1, padx=self.padx, pady=self.pady, sticky='w')
+        self.widget.bind('<Key>', self._bind_key)
 
     def getter(self):
-        value = self.widget.get(1.0, tk.END)
+        value = self._read_value()
         self.data.write_single_value(self.table, self.column, self.row_id, value)
 
     def setter(self):
@@ -126,6 +159,9 @@ class formText(_form_widget_base):
 
     def clear(self):
         self.widget.delete('1.0', tk.END)
+
+    def _read_value(self):
+        return self.widget.get(1.0, tk.END)
 
 class formCombobox(_form_widget_base):
 
@@ -138,9 +174,10 @@ class formCombobox(_form_widget_base):
         self.widget = ttk.Combobox(self, state='readonly', **kw)
         self.populate()
         self.widget.grid()
+        self.widget.bind("<<ComboboxSelected>>", self._bind_key)
 
     def getter(self):
-        value = self.widget.current()+1
+        value = self._read_value()
         self.data.write_single_value(self.table, self.column, self.row_id, value)
 
     def setter(self):
@@ -156,6 +193,9 @@ class formCombobox(_form_widget_base):
 
     def populate(self):
         self.widget['values'] = self.data.get_column_list(self.pop_tab, self.pop_col)
+
+    def _read_value(self):
+        return self.widget.current()+1
 
 class formDynamicLabel(_form_widget_base):
 
@@ -186,7 +226,7 @@ class formIndirectLabel(_form_widget_base):
         # This is the name
         value = self.value.get()
         # find the row ID where the name matches in the rem_tab
-        id = self.data.get_row_id(self.rem_tab, self.rem_col, value)
+        id = self._read_value()
         # set the value with the row_id
         self.data.write_single_value(self.table, self.column, self.row_id, id)
 
@@ -201,6 +241,9 @@ class formIndirectLabel(_form_widget_base):
     def clear(self):
         self.value.set('')
 
+    def _read_value(self):
+        return self.data.get_row_id(self.rem_tab, self.rem_col, value)
+
 class formTitle(_form_widget_base):
 
     def __init__(self, owner, value, **kw):
@@ -214,12 +257,12 @@ class formCheckbox(_form_widget_base):
     def __init__(self, owner, table, column, **kw):
         super().__init_(owner, table, column)
 
-        self.value = tk.IntVar()
-        self.widget = tk.Checkbutton(self, variable=self.value, **kw)
+        self.value = tk.BooleanVar()
+        self.widget = tk.Checkbutton(self, var=self.value, command=self._bind_key, **kw)
         self.widget.grid()
 
     def getter(self):
-        val = self.int(self.value.get())
+        val = self._read_value()
         self.data.write_single_value(self.table, self.column, self.row_id, val)
 
     def setter(self):
@@ -228,3 +271,6 @@ class formCheckbox(_form_widget_base):
 
     def clear(self):
         self.value.set(0)
+
+    def _read_value(self):
+        return self.int(self.value.get())

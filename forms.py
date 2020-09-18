@@ -20,23 +20,33 @@ column.
 from database import Database
 from form_widgets import *
 
-class Forms(tkFrame):
+class Forms(tk.LabelFrame):
 
-    def __init__(self, owner, table, columns=2, form_width=500, **kw):
+    def __init__(self, owner, table, columns=4, form_width=700, **kw):
+        '''
+        owner      = the frame that will own this frame
+        table      = table in the database that this form references
+        columns    = number of widget columns in the form
+        form_width = size of the form in pixels, including buttons
+        '''
         super().__init__(owner, **kw)
 
-        self.table = table
+        self.table = table # database table this form will reference
+        self.columns = columns # Number of columns that the form will have
         self.data = Database.get_instance()
 
-        # internal frames
-        self.btn_frame = tk.Frame(self)
-        self.btn_frame.grid(row=0, column=0, sticky='se')
-        self.ctl_frame = tk.LabelFrame(self)
-        self.ctl_frame.grid(row=0, column=1, sticky='nw')
-
         # widget layout information
-        self.form_width = form_width    # Form width in pixels
-        self.columns = columns          # Number of columns that the form will have
+
+        # screen factor is the width of a character. Used to convert between
+        # pixels and dialog units.
+        self.screen_factor = font.Font().measure('x')
+        print('measure', self.screen_factor)
+
+        # Form width in dialog units
+        self.form_width = int(form_width / self.screen_factor)
+        print('form width', self.form_width)
+
+        # internal vars for laying out controls
         self.row = 0        # The current row that is being layed out
         self.col = 0        # The current column
         self.ctl_xpad = 5   # horizontal padding for widgets
@@ -48,100 +58,149 @@ class Forms(tkFrame):
         self.btn_ypad = 5   # verticle padding for buttons
         self.btn_width = 10 # width of all buttons
 
+        # internal frames
+        self.btn_frame = tk.Frame(self)
+        self.btn_frame.grid(row=0, column=0, sticky='se')
+        self.ctl_frame = tk.LabelFrame(self)
+        self.ctl_frame.grid(row=0, column=1, sticky='nw')
+
         # row list management
-        if table is None:
-            self.row_list = None # getting the row list might be deferred
-        else:
-            self.row_list = self.data.get_id_list(self.table)
+        self._init_row_list()
         self.row_index = 0
 
         # controls management
         self.ctl_list = []
         self.grid()
 
-
     # Methods that add control widgets to the form
     def add_label(self, text, **kw):
         '''
         Add a dead label to the form. This could be considered part of a control,
-        but they are optionally added separately to facilitate lining them up.
+        but they are optionally added separately to facilitate lining them up. Labels
+        always take up 1 column.
         '''
-        pass
+        widget = tk.Label(self.ctl_frame, text=text, **kw)
+        self._grid(widget, 1, sticky='e')
 
     def add_title(self, text, **kw):
         '''
         A title spans all columns of the form and usually goes at the top or bottom
         of the form.
         '''
-        pass
+        widget = formTitle(self.ctl_frame, text, **kw)
+        self._grid(widget, self.columns)
 
     def add_entry(self, column, cols, _type, **kw):
         '''
         This is the formEntry control.
         '''
-        pass
+        widget = formEntry(self.ctl_frame, self.table, column, _type, **kw)
+        self._grid(widget, cols)
+        self.ctl_list.append(widget)
 
     def add_text(self, column, cols, **kw):
         '''
         This is the formText control.
         '''
-        pass
+        widget = formText(self.ctl_frame, self.table, column, **kw)
+        self._grid(widget, cols)
+        self.ctl_list.append(widget)
 
     def add_combo(self, column, cols, pop_tab, pop_col, **kw):
         '''
         This is the formCombobox control.
         '''
-        pass
+        widget = formText(self.ctl_frame, self.table, column, pop_tab, pop_col, **kw)
+        self._grid(widget, cols)
+        self.ctl_list.append(widget)
 
     def add_dynamic_label(self, column, cols, **kw):
         '''
         This is the formDynamicLabel control.
         '''
-        pass
+        widget = formDynamicLabel(self.ctl_frame, self.table, column, **kw)
+        self._grid(widget, cols)
+        self.ctl_list.append(widget)
 
     def add_indirect_label(self, column, cols, rem_tab, rem_col, **kw):
         '''
         This is the formIndirectLabel control.
         '''
-        pass
+        widget = formIndirectLabel(self.ctl_frame, self.table, column, **kw)
+        self._grid(widget, cols)
+        self.ctl_list.append(widget)
 
     def add_checkbox(self, column, cols, **kw):
         '''
         This is the formCheckbox control.
         '''
-        pass
+        widget = formCheckbox(self.ctl_frame, self.table, column, **kw)
+        self._grid(widget, cols)
+        self.ctl_list.append(widget)
 
-    def add_custom_widget(self, cls, **kw):
+    def add_custom_widget(self, cols, cls, **kw):
         '''
         This is any widget that has a self-contained class.
         '''
-        pass
+        widget = cls(**kw)
+        self._grid(widget, cols)
+        self.ctl_list.append(widget)
 
     def add_spacer(self, cols):
         '''
         This is an empty tk.Frame to simply take up spade.
         '''
-        pass
+        widget = tk.Frame(self.ctl_frame)
+        self._grid(widget, cols)
 
 
     # Methods that add button widgets to the form
-    def add_ctl_button(self, title, **kw):
+    def add_ctl_button(self, title, column=None, class_name=None, **kw):
         '''
         This adds a known control button to the form.
         '''
-        pass
+        if title == 'Next':
+            command = self._next_btn
+        elif title == 'Prev':
+            command = self._prev_btn
+        elif title == 'Prev':
+            command = self._prev_btn
+        elif title == 'Clear':
+            command = self._clear_btn
+        elif title == 'Save':
+            command = self._save_btn
+        elif title == 'Delete':
+            command = self._delete_btn
+        elif title == 'Edit':
+            if class_name is None:
+                raise Exception("Edit button requires a class to be specified.")
+            command = lambda x=self._row_id(), c=class_name: self._edit_btn(x, c)
+        elif title == 'Select':
+            if column is None:
+                raise Exception("Select button requires a column to be specified.")
+            command = lambda c=column: self._select_btn(c)
+        else:
+            raise Exception("Unknown control button type: %s"%(title))
+
+        widget = tk.Button(self.btn_frame, text=title, width=self.btn_width, command=command, **kw)
+        widget.grid(row=self.btn_row, column=0, padx=self.btn_xpad, sticky='nw')
+        self.btn_row += 1
 
     def add_custom_button(self, cls, **kw):
         '''
         This adds a custom button from a self-contained class.
         '''
-        pass
+        widget = cls(self.btn_frame, **kw)
+        widget.grid(row=self.btn_row, column=0, padx=self.btn_xpad, sticky='nw')
+        self.btn_row += 1
 
     def add_btn_spacer(self):
         '''
         Adds a space between buttons.
         '''
-        pass
+        widget = tk.Frame(self.btn_frame)
+        widget.grid(row=self.btn_row, column=0, pady=self.btn_ypad, sticky='nw')
+        self.btn_row += 1
 
 
     # Methods that control the form
@@ -149,13 +208,49 @@ class Forms(tkFrame):
         '''
         Call all of the setter functions for all of the widgets.
         '''
-        pass
+        if len(self.row_list) == 0:
+            showinfo('Records', 'There are no records to show for this form.')
+            return
 
-    def save_form(self):
+        for item in self.ctl_list:
+            item.set_row_id(self._row_id())
+            item.setter() # set the widget value
+
+    def save_form(self, new_flag=False):
         '''
         Call all of the getter functions for all of the widgets.
         '''
-        pass
+        if new_flag:
+            data = {}
+            for item in self.ctl_list:
+                key, val = item.get_insert_value()
+                data[key] = val
+            self.data.insert_row(self.table, data)
+            self._init_row_list()
+            self.row_index = len(self.row_list)-1
+
+        if len(self.row_list) == 0:
+            showinfo('Records', 'There are no records to save for this form.')
+            return
+        else:
+            for item in self.ctl_list:
+                item.set_row_id(self._row_id())
+                item.getter() # get the widget value
+
+
+    def show_form(self):
+        '''
+        Load the current row into the form and then place it in the owner's
+        grid.
+        '''
+        self.grid()
+        self.load_form()
+
+    def hide_form(self):
+        '''
+        Call grid_forget() on this form.
+        '''
+        self.grid_forget()
 
     # Standard button callbacks
     def _next_btn(self):
@@ -170,13 +265,13 @@ class Forms(tkFrame):
         '''
         pass
 
-    def _select_btn(self):
+    def _select_btn(self, column):
         '''
         Open the select dialog and select from the column in the row.
         '''
         pass
 
-    def _new_btn(self):
+    def _clear_btn(self):
         '''
         Clear the form or open the edit dialog.
         '''
@@ -187,7 +282,7 @@ class Forms(tkFrame):
         Call all of the getter functions for all of the controls and
         commit the database changes.
         '''
-        pass
+        self.save_form()
 
     def _delete_btn(self):
         '''
@@ -195,7 +290,7 @@ class Forms(tkFrame):
         '''
         pass
 
-    def _edit_btn(self):
+    def _edit_btn(self, row_id, _class):
         '''
         Call up the edit dialog for this table row.
         '''
@@ -210,33 +305,41 @@ class Forms(tkFrame):
                 'hoffset':wid.winfo_x(), 'voffset':wid.winfo_y(),
                 'name':wid.winfo_name()}
 
-    def _grid(self, ctrl, cols):
+    def _grid(self, ctrl, cols, **kw):
         '''
         This calls the grid function on the control and sets it in the proper
         location with the proper size.
         '''
-        if cols == self.columns:
-            ctrl.grid(row=self.row, column=self.col, columnspan=self.columns)
-            self.row += 1
-            self.col = 0
+        # will this fit into the columns available?
+        if self.col + cols <= self.columns:
+            # yes put it in the location
+            ctrl.grid(row=self.row, column=self.col,
+                        columnspan=cols,
+                        padx=self.ctl_xpad, pady=self.ctl_ypad, **kw)
+            self.col += cols
         else:
-            if self.col >= self.columns-1:
-                ctrl.grid(row=self.row, column=self.col, columnspan=cols)
-                self.col = 0
-                self.row += 1
-            else:
-                ctrl.grid(row=self.row, column=self.col, columnspan=cols)
-                self.col += 1
+            # no move it down a row
+            self.col = 0
+            self.row += 1
+            ctrl.grid(row=self.row, column=self.col,
+                        columnspan=cols,
+                        padx=self.ctl_xpad, pady=self.ctl_ypad, **kw)
+            self.col += cols
 
-    def _size(self, ctrl, cols):
+    def _row_id(self):
         '''
-        This returns the size of the control, according to the number of columns
-        selected.
+        Return the current row_id
         '''
-        # todo: this is going to be very inaccurate.
-        return cols * (self.form_width / self.columns)
+        if self.row_list is None:
+            return 0
+        return self.row_list[self.row_index]
 
-
-
-
+    def _init_row_list(self):
+        '''
+        Create the row list.
+        '''
+        if self.table is None:
+            self.row_list = None # getting the row list might be deferred
+        else:
+            self.row_list = self.data.get_id_list(self.table)
 

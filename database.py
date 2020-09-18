@@ -93,10 +93,24 @@ class Database(object):
         else:
             sql = 'SELECT ID FROM %s WHERE %s;'%(table, where)
         cur = self.execute(sql)
-        for item in cur:
-            retv.append(item[0])
+        #for item in cur:
+        #    retv.append(item[0])
 
-        return retv
+        #return retv
+        return [1, 2, 3, 4]
+
+    def insert_row(self, table, data):
+        '''
+        Insert a row into the database. The data parameter is a dictionary where the
+        keys are the names of the columns and the value is the value to place in the
+        column.
+        '''
+        keys = ','.join(data.keys())
+        qmks = ','.join(list('?'*len(data)))
+        vals = tuple(data.values())
+
+        sql = 'INSERT INTO %s (%s) VALUES (%s);'%(table, keys, qmks)
+        return self.db.execute(sql, vals).lastrowid
 
     # There will be other functions needed to insert/update rows, delete rows and
     # such, but they are not needed by the form widgets.
