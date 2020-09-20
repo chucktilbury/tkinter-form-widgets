@@ -5,6 +5,8 @@ Only widgets that present a value that can be stored in a database are presented
 
 This uses the Sqlite3 database, but any SQL database should be easily interfaced by replacing parts of the Database class.
 
+The forms are created as a single stand-alone widget with completely internal event handling.
+
 Only Python 3.x is supported.
 
 ## Demo application
