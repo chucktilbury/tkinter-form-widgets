@@ -277,3 +277,7 @@ class formCheckbox(_form_widget_base):
 
     def _read_value(self):
         return self.int(self.value.get())
+
+# Note that radio buttons are not represented in this library. I don't need them for the
+# applications that I am writing because I use a combo box instead. They take up less
+# room on the form.

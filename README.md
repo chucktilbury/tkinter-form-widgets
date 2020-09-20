@@ -1,13 +1,17 @@
-# Form widgets for tkinter and sqlite3 
-This is a simple wrapper that allows tkinter form widgets to access a generic database to get and store values. Only widgets that present a value that can be stored in a database are presented. These widget classes are used exactly like a regular tkinter widget would be used, but with some extra parameters for database access.
+# Form widgets for tkinter and sqlite3
+These classes are intended to be the core for any application that needs to represent database tables as forms. The forms are generic and can be used in any kind of tkinter.Frame.
 
-Only Python 3.x is supported. 
+Only widgets that present a value that can be stored in a database are presented. These widget classes are used exactly like a regular tkinter widget would be used, but with some extra parameters for database access.
+
+This uses the Sqlite3 database, but any SQL database should be easily interfaced by replacing parts of the Database class.
+
+Only Python 3.x is supported.
 
 ## Supported tkinter widgets
 Only widgets that may have data in a database are supported. This is a bare minimum that one may use for forms.
 
 All of these widgets implement functions to get and save data to the database.
-* getter() -- Reads the widget and saves the data to the database. 
+* getter() -- Reads the widget and saves the data to the database.
 * setter() -- Reads the database and places the data into the widget.
 * clear() -- Removes the data from the widget. Does not update the database. For the combo box, it resets the selection.
 * populate() -- For the combo box widget, this populates the items in it from the database. For other widgets, it simply does the same thing as setter()
@@ -53,7 +57,7 @@ This is a wrapper for the tkinter.ttk Combobox widget. In the local table, an ID
 * rem_column -- This is the column of the remote table.
 
 ### formCheckbox
-This is a wrapper for the tkinter Checkbox class. The check box represents a boolean value in the database. 
+This is a wrapper for the tkinter Checkbox class. The check box represents a boolean value in the database.
 
 ##### Additional parameters
 * table -- This is the table that the data for this widget is in.
