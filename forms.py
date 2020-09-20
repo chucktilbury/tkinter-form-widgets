@@ -19,6 +19,7 @@ column.
 
 from database import Database
 from form_widgets import *
+from select_dialog import SelectDialog
 
 class Forms(tk.LabelFrame):
 
@@ -34,6 +35,7 @@ class Forms(tk.LabelFrame):
         self.table = table # database table this form will reference
         self.columns = columns # Number of columns that the form will have
         self.data = Database.get_instance()
+        self.owner = owner
 
         # widget layout information
 
@@ -155,7 +157,7 @@ class Forms(tk.LabelFrame):
 
 
     # Methods that add button widgets to the form
-    def add_ctl_button(self, title, column=None, class_name=None, **kw):
+    def add_ctl_button(self, title, column=None, class_name=None, thing=None, new_flag=False, **kw):
         '''
         This adds a known control button to the form.
         '''
@@ -167,18 +169,22 @@ class Forms(tk.LabelFrame):
             command = self._prev_btn
         elif title == 'Clear':
             command = self._clear_btn
-        elif title == 'Save':
-            command = self._save_btn
         elif title == 'Delete':
             command = self._delete_btn
+        elif title == 'Save':
+            command = lambda f=new_flag: self._save_btn(f)
+        elif title == 'New':
+            if class_name is None:
+                raise Exception("New button requires a class to be specified.")
+            command = lambda c=class_name: self._new_btn(c)
         elif title == 'Edit':
             if class_name is None:
                 raise Exception("Edit button requires a class to be specified.")
-            command = lambda x=self._row_id(), c=class_name: self._edit_btn(x, c)
+            command = lambda c=class_name: self._edit_btn(c)
         elif title == 'Select':
             if column is None:
                 raise Exception("Select button requires a column to be specified.")
-            command = lambda c=column: self._select_btn(c)
+            command = lambda c=column, t=thing: self._select_btn(c, t)
         else:
             raise Exception("Unknown control button type: %s"%(title))
 
@@ -298,13 +304,13 @@ class Forms(tk.LabelFrame):
         for item in self.ctl_list:
             item.clear()
 
-    def _save_btn(self):
+    def _save_btn(self, new_flag=False):
         '''
         Call all of the getter functions for all of the controls and
         commit the database changes.
         '''
         if askyesno('Save record?', 'Are you sure you want to save this?'):
-            self.save_form()
+            self.save_form(new_flag)
 
     def _delete_btn(self):
         '''
@@ -319,18 +325,29 @@ class Forms(tk.LabelFrame):
                 self.row_index -= 1
             self.load_form()
 
-    def _edit_btn(self, row_id, _class):
+    def _edit_btn(self, _class):
         '''
         Call up the edit dialog for this table row.
         '''
-        pass
+        _class(self.owner, self.row_index)
+        self.load_form()
 
-    def _select_btn(self, column):
+    def _select_btn(self, column, thing=None):
         '''
         Open the select dialog and select from the column in the row.
         '''
-        pass
+        sd = SelectDialog(self.owner, self.table, column, thing)
+        #print(sd.item_id)
+        if sd.item_id > 0:
+            self.row_index = self.row_list.index(sd.item_id)
+            self.load_form()
 
+    def _new_btn(self, _class):
+        '''
+        Simply create a new table record and store it in the database.
+        '''
+        _class(self.owner)
+        self._init_row_list()
 
     # Other private functions
     def _get_geometry(self, wid):

@@ -179,6 +179,22 @@ class Database(object):
 
         return retv
 
+    def get_id_by_column(self, table, column, val):
+        '''
+        Return a dictionary of the columns in the row where a data element matches the
+        value given.
+        '''
+        if type(val) is str:
+            sql = 'SELECT ID FROM %s WHERE %s = \"%s\";'%(table, column, val)
+        else:
+            sql = 'SELECT ID FROM %s WHERE %s = %s;'%(table, column, val)
+        row = self.execute(sql).fetchall()
+
+        if len(row) == 0:
+            return None
+        else:
+            return dict(row[0])['ID']
+
     def insert_row(self, table, data):
         '''
         Insert a row into the database. The data parameter is a dictionary where the
