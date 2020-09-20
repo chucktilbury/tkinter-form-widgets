@@ -8,12 +8,12 @@ INSERT INTO Contact
         phone_number, web_site, description, country)
     VALUES
         ('Chuck Tilbury',
-        '10855 State Highway 83', '',
-        'Poteau', 'Oklahoma', '74953',
+        '1085 State Highway 99', '',
+        'Green Hills', 'Oklahoma', '74923',
         'info@whistlemaker.com',
-        '+1-512-840-8322',
+        '+1-918-647-8322',
         'http://whistlemaker.com',
-        'Maker of fine musical instruments',
+        'Author of this library.',
         'United States');
 
 INSERT INTO Contact

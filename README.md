@@ -7,6 +7,9 @@ This uses the Sqlite3 database, but any SQL database should be easily interfaced
 
 Only Python 3.x is supported.
 
+## Demo application
+The library is presented as an implementation of a contacts database. It is not really intended to be useful for that, but instead, to demonstrate and test the library functionality.
+
 ## Supported tkinter widgets
 Only widgets that may have data in a database are supported. This is a bare minimum that one may use for forms.
 
