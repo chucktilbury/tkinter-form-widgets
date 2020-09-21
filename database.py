@@ -5,6 +5,7 @@ that interfaces to the form widgets.
 '''
 import sqlite3 as sql
 import os, time, locale
+from tkinter.messagebox import showerror
 
 class Database(object):
 
@@ -30,6 +31,7 @@ class Database(object):
         self.db_pop_file = 'sql/populate.sql'
         self.open()
         locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
+        self.db.execute('PRAGMA case_sensitive_like = false;')
 
     def open(self):
         '''
@@ -76,6 +78,7 @@ class Database(object):
             while True:
                 line = self.read_statement(fh)
                 if len(line) > 0:
+                    #print(line)
                     db.execute(line)
                 else:
                     break
@@ -99,15 +102,18 @@ class Database(object):
         '''
         self.db.commit()
 
-    def execute(self, sql, data = None):
+    def execute(self, _sql, data = None):
         '''
         Execute a single SQL statement.
         '''
         #print('execute: sql = %s, data = %s'%(sql, str(data)))
-        if data is None:
-            return self.db.execute(sql)
-        else:
-            return self.db.execute(sql, data)
+        try:
+            if data is None:
+                return self.db.execute(_sql)
+            else:
+                return self.db.execute(_sql, data)
+        except sql.IntegrityError as e:
+            showerror('ERROR', str(e))
 
     def read_single_value(self, table, column, row_id):
         '''
@@ -205,12 +211,18 @@ class Database(object):
         qmks = ','.join(list('?'*len(data)))
         vals = tuple(data.values())
 
-        sql = 'INSERT INTO %s (%s) VALUES (%s);'%(table, keys, qmks)
-        return self.db.execute(sql, vals).lastrowid
+        try:
+            line = 'INSERT INTO %s (%s) VALUES (%s);'%(table, keys, qmks)
+            cur = self.db.execute(line, vals).lastrowid
+            #print(str(cur))
+            return cur
+        except sql.IntegrityError as e:
+            showerror('ERROR', str(e))
+            return None
 
     def delete_row(self, table, row_id):
         '''
         Delete the row with the given ID.
         '''
-        sql = 'DELETE FROM %s WHERE ID = %d;' % (table, id)
+        sql = 'DELETE FROM %s WHERE ID = %d;' % (table, row_id)
         return self.db.execute(sql)

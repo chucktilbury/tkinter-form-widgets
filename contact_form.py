@@ -53,6 +53,7 @@ class ContactForm(Forms):
         self.add_ctl_button('New', class_name=NewContact)
         self.add_ctl_button('Select', column='name', thing='Contact')
         self.add_ctl_button('Edit', class_name=ContactEdit)
+        self.add_ctl_button('Delete')
         self.add_btn_spacer()
         self.add_ctl_button('Save')
         self.load_form()

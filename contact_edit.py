@@ -49,7 +49,7 @@ class _contact_edit_form(Forms):
         self.add_text('description', 3, width=self.width1+7, height=20)
 
     def add_new_buttons(self):
-        self.add_ctl_button('Save', new_flag=True)
+        self.add_ctl_button('Save')
 
     def add_edit_buttons(self):
         self.add_ctl_button('Next')
@@ -68,14 +68,15 @@ class ContactEdit(tk.Toplevel):
         self.lower_frame = tk.LabelFrame(self)
         self.lower_frame.grid(row=1, column=0)
 
-        cf = _contact_edit_form(self.upper_frame, row_id)
-        cf.grid()
-        cf.add_edit_buttons()
+        self.cf = _contact_edit_form(self.upper_frame, row_id)
+        self.cf.grid()
+        self.cf.add_edit_buttons()
         tk.Button(self.lower_frame, text='Dismiss', command=self._dismiss_btn).grid()
-        cf.load_form()
+        self.cf.load_form()
         self.wait_window(self)
 
     def _dismiss_btn(self):
+        self.cf.check_save()
         self.destroy()
 
 class NewContact(tk.Toplevel):
@@ -89,11 +90,13 @@ class NewContact(tk.Toplevel):
         self.lower_frame = tk.LabelFrame(self)
         self.lower_frame.grid(row=1, column=0)
 
-        cf = _contact_edit_form(self.upper_frame, 0)
-        cf.grid()
-        cf.add_new_buttons()
+        self.cf = _contact_edit_form(self.upper_frame, 0)
+        self.cf.grid()
+        self.cf.new_flag = True
+        self.cf.add_new_buttons()
         tk.Button(self.lower_frame, text='Dismiss', command=self._dismiss_btn).grid()
         self.wait_window(self)
 
     def _dismiss_btn(self):
+        self.cf.check_save()
         self.destroy()

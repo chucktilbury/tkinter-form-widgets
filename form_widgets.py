@@ -109,7 +109,10 @@ class formEntry(_form_widget_base):
             self.widget.configure(state='normal')
 
         val = self.data.read_single_value(self.table, self.column, self.row_id)
-        self.value.set(str(val))
+        if val is None:
+            self.value.set('')
+        else:
+            self.value.set(str(val))
 
         if state == 'readonly':
             self.widget.configure(state='readonly')
@@ -125,7 +128,12 @@ class formEntry(_form_widget_base):
             self.widget.configure(state='readonly')
 
     def _read_value(self):
-        return self._type(self.value.get())
+        val = self._type(self.value.get())
+        # This enforces the NOT NULL clause in the database structure
+        if val == '':
+            return None
+        else:
+            return val
 
 class formText(_form_widget_base):
 
@@ -211,7 +219,10 @@ class formDynamicLabel(_form_widget_base):
 
     def setter(self):
         value = self.data.read_single_value(self.table, self.column, self.row_id)
-        self.value.set(str(value))
+        if value is None:
+            self.value.set('')
+        else:
+            self.value.set(str(value))
 
 class formIndirectLabel(_form_widget_base):
 

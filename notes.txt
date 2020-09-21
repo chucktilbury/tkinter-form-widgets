@@ -1,2 +1,4 @@
 
 Still need complete testing and bug fixes.
+
+Need a way to detect similar records in a generic way. Using the IS LIKE clause?

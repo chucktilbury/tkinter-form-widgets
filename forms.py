@@ -72,6 +72,7 @@ class Forms(tk.LabelFrame):
 
         # controls management
         self.ctl_list = []
+        self.new_flag = False
         self.grid()
 
     # Methods that add control widgets to the form
@@ -157,7 +158,7 @@ class Forms(tk.LabelFrame):
 
 
     # Methods that add button widgets to the form
-    def add_ctl_button(self, title, column=None, class_name=None, thing=None, new_flag=False, **kw):
+    def add_ctl_button(self, title, column=None, class_name=None, thing=None, **kw):
         '''
         This adds a known control button to the form.
         '''
@@ -172,7 +173,7 @@ class Forms(tk.LabelFrame):
         elif title == 'Delete':
             command = self._delete_btn
         elif title == 'Save':
-            command = lambda f=new_flag: self._save_btn(f)
+            command = self._save_btn
         elif title == 'New':
             if class_name is None:
                 raise Exception("New button requires a class to be specified.")
@@ -221,20 +222,23 @@ class Forms(tk.LabelFrame):
         for item in self.ctl_list:
             item.set_row_id(self._row_id())
             item.setter() # set the widget value
-            item.is_changed(True) # reset the changed flag
+            item.is_changed(clear_flag=True) # reset the changed flag
 
-    def save_form(self, new_flag=False):
+    def save_form(self):
         '''
         Call all of the getter functions for all of the widgets.
         '''
-        if new_flag:
+        #print(self.new_flag)
+        if self.new_flag:
             data = {}
             for item in self.ctl_list:
                 key, val = item.get_insert_value()
                 data[key] = val
-            self.data.insert_row(self.table, data)
-            self._init_row_list()
-            self.row_index = len(self.row_list)-1
+            result = self.data.insert_row(self.table, data)
+            if not result is None:
+                self._init_row_list()
+                self.row_index = len(self.row_list)-1
+                self.new_flag = False
         else:
             if len(self.row_list) == 0:
                 showinfo('Records', 'There are no records to save for this form.')
@@ -242,8 +246,12 @@ class Forms(tk.LabelFrame):
             else:
                 for item in self.ctl_list:
                     item.set_row_id(self._row_id())
-                    if item.is_changed(True):
+                    if item.is_changed(clear_flag=True):
                         item.getter() # get the widget value
+
+        for item in self.ctl_list:
+            item.is_changed(clear_flag=True) # reset the changed flag
+
         self.data.commit()
 
     def show_form(self):
@@ -265,12 +273,7 @@ class Forms(tk.LabelFrame):
         '''
         Get the next row in the table and load the form.
         '''
-        for item in self.ctl_list:
-            if item.is_changed():
-                if askyesno('Save This?', 'There are changed fields. Do you want to save this record?'):
-                    self.save_form()
-                break
-
+        self.check_save()
         if not self.row_list is None:
             self.row_index += 1
             if self.row_index > len(self.row_list)-1:
@@ -283,12 +286,7 @@ class Forms(tk.LabelFrame):
         '''
         Get the previous row in the database and load the form.
         '''
-        for item in self.ctl_list:
-            if item.is_changed():
-                if askyesno('Save This?', 'There are changed fields. Do you want to save this record?'):
-                    self.save_form()
-                break
-
+        self.check_save()
         if not self.row_list is None:
             self.row_index -= 1
             if self.row_index < 0:
@@ -304,24 +302,24 @@ class Forms(tk.LabelFrame):
         for item in self.ctl_list:
             item.clear()
 
-    def _save_btn(self, new_flag=False):
+    def _save_btn(self):
         '''
         Call all of the getter functions for all of the controls and
         commit the database changes.
         '''
         if askyesno('Save record?', 'Are you sure you want to save this?'):
-            self.save_form(new_flag)
+            self.save_form()
 
     def _delete_btn(self):
         '''
         Delete the current row from the database and load the next one.
         '''
         if askyesno('Delete record?', 'Are you sure you want to delete this?'):
-            self.data.delete_row(self.table, self.row_list[self.row_index])
+            self.data.delete_row(self.table, self._row_id())
             self.data.commit()
 
             self.row_list = self.data.get_id_list(self.table)
-            if self.row_index > len(self.row_list):
+            if self.row_index >= len(self.row_list):
                 self.row_index -= 1
             self.load_form()
 
@@ -336,6 +334,7 @@ class Forms(tk.LabelFrame):
         '''
         Open the select dialog and select from the column in the row.
         '''
+        self.check_save()
         sd = SelectDialog(self.owner, self.table, column, thing)
         #print(sd.item_id)
         if sd.item_id > 0:
@@ -346,6 +345,8 @@ class Forms(tk.LabelFrame):
         '''
         Simply create a new table record and store it in the database.
         '''
+        self.check_save()
+        #self.new_flag = True
         _class(self.owner)
         self._init_row_list()
 
@@ -385,6 +386,7 @@ class Forms(tk.LabelFrame):
         #print('list:', self.row_list, 'index:', self.row_index)
         if self.row_list is None:
             return 0
+
         return self.row_list[self.row_index]
 
     def _init_row_list(self):
@@ -397,3 +399,12 @@ class Forms(tk.LabelFrame):
         else:
             self.row_list = self.data.get_id_list(self.table)
 
+    def check_save(self):
+        '''
+        Check if the form has changed and if it has, present a confirm dialog.
+        '''
+        for item in self.ctl_list:
+            if item.is_changed():
+                if askyesno('Save This?', 'There are changed fields. Do you want to save this record?'):
+                    self.save_form()
+                break
