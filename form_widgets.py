@@ -79,6 +79,27 @@ class _form_widget_base(tk.Frame):
             self.changed = False
         return val
 
+    def get_column(self):
+        '''
+        Return the column.
+        '''
+        return self.column
+
+    def get_table(self):
+        '''
+        Return the table.
+        '''
+        return self.table
+
+    def check_dupes(self):
+        '''
+        Check for duplicate entries using the table and column along with the value
+        held by the widget. Returns a list of dicts containg the entire rows where
+        the data in the coumn might match. If there are no matches, then returns
+        an empty list
+        '''
+        return self.data.check_dups(self.table, self.column, self._read_value())
+
     def _bind_key(self, event=None):
         '''
         Callback for key binding to detect if widget has changed.

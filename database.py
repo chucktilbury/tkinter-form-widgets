@@ -226,3 +226,26 @@ class Database(object):
         '''
         sql = 'DELETE FROM %s WHERE ID = %d;' % (table, row_id)
         return self.db.execute(sql)
+
+    def check_dups(self, table, column, value):
+        '''
+        Return a list of rows that look similar to the value for that column.
+        The '%' wildcard is added to both ends of the value and all spaces in
+        value are replaced with the '%'. This is a very general search.
+        '''
+        if type(value) is str:
+            val = ' '.join(value.split())   # get rid of duplicate spaces
+            val = val.replace(' ', '%')     # replace the spaces with '%'
+            where = '%s%s%s'%('%', val, '%') # enclose the result in '%'s
+            line = 'SELECT * FROM %s WHERE %s LIKE \'%s\''%(table, column, where)
+        else:
+            where = '%s%s%s'%('%', str(value), '%') # enclose the result in '%'s
+            line = 'SELECT * FROM %s WHERE %s LIKE %s'%(table, column, where)
+
+        print(line)
+        cur = self.db.execute(line)
+        retv = []
+        for item in cur:
+            retv.append(dict(item))
+
+        return retv

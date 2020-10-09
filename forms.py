@@ -36,6 +36,7 @@ class Forms(tk.LabelFrame):
         self.columns = columns # Number of columns that the form will have
         self.data = Database.get_instance()
         self.owner = owner
+        self.dup_wids = [] # list of widget classes to check for duplicates in
 
         # widget layout information
 
@@ -75,6 +76,14 @@ class Forms(tk.LabelFrame):
         self.new_flag = False
         self.grid()
 
+    def add_dupe_check(self, wid):
+        '''
+        Add a duplicate check using a widget from the form_widgets. The widget
+        must have the check_dupes method implemented or an exception will be
+        generated AT RUNTIME.
+        '''
+        self.dup_wids.append(wid)
+
     # Methods that add control widgets to the form
     def add_label(self, text, **kw):
         '''
@@ -84,6 +93,7 @@ class Forms(tk.LabelFrame):
         '''
         widget = tk.Label(self.ctl_frame, text=text, **kw)
         self._grid(widget, 1, sticky='e')
+        return widget
 
     def add_title(self, text, **kw):
         '''
@@ -92,6 +102,7 @@ class Forms(tk.LabelFrame):
         '''
         widget = formTitle(self.ctl_frame, text, **kw)
         self._grid(widget, self.columns)
+        return widget
 
     def add_entry(self, column, cols, _type, **kw):
         '''
@@ -100,6 +111,7 @@ class Forms(tk.LabelFrame):
         widget = formEntry(self.ctl_frame, self.table, column, _type, **kw)
         self._grid(widget, cols, sticky='w')
         self.ctl_list.append(widget)
+        return widget
 
     def add_text(self, column, cols, **kw):
         '''
@@ -108,6 +120,7 @@ class Forms(tk.LabelFrame):
         widget = formText(self.ctl_frame, self.table, column, **kw)
         self._grid(widget, cols, sticky='w')
         self.ctl_list.append(widget)
+        return widget
 
     def add_combo(self, column, cols, pop_tab, pop_col, **kw):
         '''
@@ -116,6 +129,7 @@ class Forms(tk.LabelFrame):
         widget = formText(self.ctl_frame, self.table, column, pop_tab, pop_col, **kw)
         self._grid(widget, cols, sticky='w')
         self.ctl_list.append(widget)
+        return widget
 
     def add_dynamic_label(self, column, cols, **kw):
         '''
@@ -124,6 +138,7 @@ class Forms(tk.LabelFrame):
         widget = formDynamicLabel(self.ctl_frame, self.table, column, **kw)
         self._grid(widget, cols, sticky='w')
         self.ctl_list.append(widget)
+        return widget
 
     def add_indirect_label(self, column, cols, rem_tab, rem_col, **kw):
         '''
@@ -132,6 +147,7 @@ class Forms(tk.LabelFrame):
         widget = formIndirectLabel(self.ctl_frame, self.table, column, **kw)
         self._grid(widget, cols, sticky='w')
         self.ctl_list.append(widget)
+        return widget
 
     def add_checkbox(self, column, cols, **kw):
         '''
@@ -140,6 +156,7 @@ class Forms(tk.LabelFrame):
         widget = formCheckbox(self.ctl_frame, self.table, column, **kw)
         self._grid(widget, cols, sticky='w')
         self.ctl_list.append(widget)
+        return widget
 
     def add_custom_widget(self, cols, cls, **kw):
         '''
@@ -148,6 +165,7 @@ class Forms(tk.LabelFrame):
         widget = cls(**kw)
         self._grid(widget, cols, sticky='w')
         self.ctl_list.append(widget)
+        return widget
 
     def add_spacer(self, cols):
         '''
@@ -155,6 +173,7 @@ class Forms(tk.LabelFrame):
         '''
         widget = tk.Frame(self.ctl_frame)
         self._grid(widget, cols)
+        return widget
 
 
     # Methods that add button widgets to the form
@@ -192,6 +211,7 @@ class Forms(tk.LabelFrame):
         widget = tk.Button(self.btn_frame, text=title, width=self.btn_width, command=command, **kw)
         widget.grid(row=self.btn_row, column=0, padx=self.btn_xpad, sticky='nw')
         self.btn_row += 1
+        return widget
 
     def add_custom_button(self, cls, **kw):
         '''
@@ -200,6 +220,7 @@ class Forms(tk.LabelFrame):
         widget = cls(self.btn_frame, **kw)
         widget.grid(row=self.btn_row, column=0, padx=self.btn_xpad, sticky='nw')
         self.btn_row += 1
+        return widget
 
     def add_btn_spacer(self):
         '''
@@ -208,6 +229,7 @@ class Forms(tk.LabelFrame):
         widget = tk.Frame(self.btn_frame)
         widget.grid(row=self.btn_row, column=0, pady=self.btn_ypad, sticky='nw')
         self.btn_row += 1
+        return widget
 
 
     # Methods that control the form
@@ -307,8 +329,26 @@ class Forms(tk.LabelFrame):
         Call all of the getter functions for all of the controls and
         commit the database changes.
         '''
-        if askyesno('Save record?', 'Are you sure you want to save this?'):
-            self.save_form()
+        lst = []
+        for item in self.dup_wids:
+            l = item.check_dupes()
+            if len(l) > 0:
+                for elem in l:
+                    lst.append(elem)
+
+        l = len(lst)
+        # warn if there are duplicates.
+        if l > 0:
+            if askyesno('Save Record?',
+                    'There are %d item(s) that may be duplicates of this.\n'%(l)+
+                    'Do you want to continue?'):
+                self.save_form()
+            else:
+                return
+        # verify that the record is to be saved.
+        else:
+            if askyesno('Save Record?', 'Are you sure you want to save this?'):
+                self.save_form()
 
     def _delete_btn(self):
         '''

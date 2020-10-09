@@ -1,4 +1,8 @@
 
 Still need complete testing and bug fixes.
 
-Need a way to detect similar records in a generic way. Using the IS LIKE clause?
+*done* Need a way to detect similar records in a generic way. Using the LIKE clause?
+https://www.sqlitetutorial.net/sqlite-like/
+
+If a possible duplicate record is located, then a dialog is presented with the
+names, allowing select of one or save as is.
