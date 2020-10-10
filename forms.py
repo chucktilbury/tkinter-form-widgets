@@ -275,6 +275,7 @@ class Forms(tk.LabelFrame):
             item.is_changed(clear_flag=True) # reset the changed flag
 
         self.data.commit()
+        showinfo('Info', 'Form saved.')
 
     def show_form(self):
         '''
@@ -347,8 +348,8 @@ class Forms(tk.LabelFrame):
                 return
         # verify that the record is to be saved.
         else:
-            if askyesno('Save Record?', 'Are you sure you want to save this?'):
-                self.save_form()
+            #if askyesno('Save Record?', 'Are you sure you want to save this?'):
+            self.save_form()
 
     def _delete_btn(self):
         '''

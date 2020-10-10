@@ -236,10 +236,10 @@ class Database(object):
         if type(value) is str:
             val = ' '.join(value.split())   # get rid of duplicate spaces
             val = val.replace(' ', '%')     # replace the spaces with '%'
-            where = '%s%s%s'%('%', val, '%') # enclose the result in '%'s
+            where = '%'+str(value)+'%'
             line = 'SELECT * FROM %s WHERE %s LIKE \'%s\''%(table, column, where)
         else:
-            where = '%s%s%s'%('%', str(value), '%') # enclose the result in '%'s
+            where = '%'+str(value)+'%' #'%s%s%s'%('%', str(value), '%') # enclose the result in '%'s
             line = 'SELECT * FROM %s WHERE %s LIKE %s'%(table, column, where)
 
         print(line)

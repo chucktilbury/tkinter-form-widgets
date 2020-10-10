@@ -29,7 +29,7 @@ class searchWidget(ttk.Combobox):
         self._generate_list()
 
     def _key_handler(self, event=None):
-        print(event, self.get())
+        #print(event, self.get())
         self._generate_list()
 
     def _generate_list(self):
@@ -43,10 +43,10 @@ class searchWidget(ttk.Combobox):
             for item in cur:
                 lst.append(item[0])
         except:
-            print('exception')
+            #print('exception')
             pass
 
         lst.sort()
-        print(lst)
+        #print(lst)
         self['values'] = lst
         #self.set(lst[0])
