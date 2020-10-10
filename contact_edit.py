@@ -16,7 +16,7 @@ class _contact_edit_form(Forms):
         self.add_title('Edit Contacts')
 
         self.add_label('Name:')
-        dups = self.add_entry('name', 3, str, width=self.width1)
+        dups = self.add_entry('name', 3, str, ttip='Full name of the contact', width=self.width1)
         self.add_dupe_check(dups)
 
         self.add_label('Address1:')

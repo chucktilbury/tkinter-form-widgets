@@ -2,6 +2,7 @@
 import tkinter as tk
 import tkinter.ttk as ttk
 from database import Database
+from search_widget import searchWidget
 
 class SelectDialog(tk.Toplevel):
 
@@ -18,9 +19,6 @@ class SelectDialog(tk.Toplevel):
 
         self.data = Database.get_instance()
 
-        self.lst = self.data.get_column_list(table, column)
-        self.lst.sort()
-
         self.item_id = -1   # impossible value
 
         self.upper_frame = tk.Frame(self)
@@ -32,9 +30,8 @@ class SelectDialog(tk.Toplevel):
                         font=("Helvetica", 14)).grid(row=0, column=0, columnspan=2)
 
         tk.Label(self.upper_frame, text='%s:'%(thing)).grid(row=1, column=0)
-        self.cbb = ttk.Combobox(self.upper_frame, values=self.lst)
+        self.cbb = searchWidget(self.upper_frame, table, column)
         self.cbb.grid(row=1, column=1, padx=5, pady=5)
-        self.cbb.current(0)
 
         w = tk.Button(self.lower_frame, text="OK", width=10, command=self._ok_btn)
         w.grid(row=0, column=0, sticky='e')

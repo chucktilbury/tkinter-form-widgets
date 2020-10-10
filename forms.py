@@ -104,65 +104,65 @@ class Forms(tk.LabelFrame):
         self._grid(widget, self.columns)
         return widget
 
-    def add_entry(self, column, cols, _type, **kw):
+    def add_entry(self, column, cols, _type, ttip=None, **kw):
         '''
         This is the formEntry control.
         '''
-        widget = formEntry(self.ctl_frame, self.table, column, _type, **kw)
+        widget = formEntry(self.ctl_frame, self.table, column, _type, tool_tip=ttip, **kw)
         self._grid(widget, cols, sticky='w')
         self.ctl_list.append(widget)
         return widget
 
-    def add_text(self, column, cols, **kw):
+    def add_text(self, column, cols, ttip=None, **kw):
         '''
         This is the formText control.
         '''
-        widget = formText(self.ctl_frame, self.table, column, **kw)
+        widget = formText(self.ctl_frame, self.table, column, tool_tip=ttip, **kw)
         self._grid(widget, cols, sticky='w')
         self.ctl_list.append(widget)
         return widget
 
-    def add_combo(self, column, cols, pop_tab, pop_col, **kw):
+    def add_combo(self, column, cols, pop_tab, pop_col, ttip=None, **kw):
         '''
         This is the formCombobox control.
         '''
-        widget = formText(self.ctl_frame, self.table, column, pop_tab, pop_col, **kw)
+        widget = formText(self.ctl_frame, self.table, column, pop_tab, pop_col, tool_tip=ttip, **kw)
         self._grid(widget, cols, sticky='w')
         self.ctl_list.append(widget)
         return widget
 
-    def add_dynamic_label(self, column, cols, **kw):
+    def add_dynamic_label(self, column, cols, ttip=None, **kw):
         '''
         This is the formDynamicLabel control.
         '''
-        widget = formDynamicLabel(self.ctl_frame, self.table, column, **kw)
+        widget = formDynamicLabel(self.ctl_frame, self.table, column, tool_tip=ttip, **kw)
         self._grid(widget, cols, sticky='w')
         self.ctl_list.append(widget)
         return widget
 
-    def add_indirect_label(self, column, cols, rem_tab, rem_col, **kw):
+    def add_indirect_label(self, column, cols, rem_tab, rem_col, ttip=None, **kw):
         '''
         This is the formIndirectLabel control.
         '''
-        widget = formIndirectLabel(self.ctl_frame, self.table, column, **kw)
+        widget = formIndirectLabel(self.ctl_frame, self.table, column, tool_tip=ttip, **kw)
         self._grid(widget, cols, sticky='w')
         self.ctl_list.append(widget)
         return widget
 
-    def add_checkbox(self, column, cols, **kw):
+    def add_checkbox(self, column, cols, ttip=None, **kw):
         '''
         This is the formCheckbox control.
         '''
-        widget = formCheckbox(self.ctl_frame, self.table, column, **kw)
+        widget = formCheckbox(self.ctl_frame, self.table, column, tool_tip=ttip, **kw)
         self._grid(widget, cols, sticky='w')
         self.ctl_list.append(widget)
         return widget
 
-    def add_custom_widget(self, cols, cls, **kw):
+    def add_custom_widget(self, cols, cls, ttip=None, **kw):
         '''
         This is any widget that has a self-contained class.
         '''
-        widget = cls(**kw)
+        widget = cls(tool_tip=ttip, **kw)
         self._grid(widget, cols, sticky='w')
         self.ctl_list.append(widget)
         return widget
@@ -377,9 +377,12 @@ class Forms(tk.LabelFrame):
         self.check_save()
         sd = SelectDialog(self.owner, self.table, column, thing)
         #print(sd.item_id)
-        if sd.item_id > 0:
+        if sd.item_id is None:
+            showerror('Error', 'Selection not found.')
+        elif sd.item_id > 0:
             self.row_index = self.row_list.index(sd.item_id)
             self.load_form()
+        # else cancel was selected
 
     def _new_btn(self, _class):
         '''

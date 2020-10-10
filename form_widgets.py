@@ -12,6 +12,36 @@ import tkinter.font as font
 from tkinter.messagebox import *
 from database import Database
 
+class toolTip:
+    '''
+    This class binds a tool tip to a widget.
+    '''
+
+    def __init__(self, widget, text):
+        self.widget = widget
+        self.text = text
+        self.widget.bind("<Enter>", self.enter)
+        self.widget.bind("<Leave>", self.close)
+
+    def enter(self, event=None):
+        x = y = 0
+        x, y, cx, cy = self.widget.bbox("insert")
+        x += self.widget.winfo_rootx() + 25
+        y += self.widget.winfo_rooty() + 20
+        # creates a toplevel window
+        self.tw = tk.Toplevel(self.widget)
+        # Leaves only the label and removes the app window
+        self.tw.wm_overrideredirect(True)
+        self.tw.wm_geometry("+%d+%d" % (x, y))
+        label = tk.Label(self.tw, text=self.text, justify='left',
+                       background='yellow', relief='solid', borderwidth=1,
+                       font=("times", "10", "normal"))
+        label.pack(ipadx=1)
+
+    def close(self, event=None):
+        if self.tw:
+            self.tw.destroy()
+
 class _form_widget_base(tk.Frame):
     '''
     This class implements the basic functions for all of the form widgets and
@@ -111,7 +141,7 @@ class formEntry(_form_widget_base):
     Wrapper for the tkinter Entry widget.
     '''
 
-    def __init__(self, owner, table, column, _type, **kw):
+    def __init__(self, owner, table, column, _type, tool_tip=None, **kw):
         super().__init__(owner, table, column)
         self._type = _type
 
@@ -119,6 +149,8 @@ class formEntry(_form_widget_base):
         self.widget = tk.Entry(self, textvariable=self.value, **kw)
         self.widget.grid()
         self.widget.bind('<Key>', self._bind_key)
+        if not tool_tip is None:
+            self.tool_tip = toolTip(self, tool_tip)
 
     def getter(self):
         val = self._read_value()
@@ -158,7 +190,7 @@ class formEntry(_form_widget_base):
 
 class formText(_form_widget_base):
 
-    def __init__(self, owner, table, column, **kw):
+    def __init__(self, owner, table, column, tool_tip=None, **kw):
         super().__init__(owner, table, column)
 
         self.local_frame = tk.Frame(self, bd=1, relief=tk.RIDGE)
@@ -178,6 +210,8 @@ class formText(_form_widget_base):
 
         self.local_frame.grid(row=0, column=1, sticky='w')
         self.widget.bind('<Key>', self._bind_key)
+        if not tool_tip is None:
+            self.tool_tip = toolTip(self, tool_tip)
 
     def getter(self):
         value = self._read_value()
@@ -197,7 +231,7 @@ class formText(_form_widget_base):
 
 class formCombobox(_form_widget_base):
 
-    def __init__(self, owner, val_tab, val_col, pop_tab, pop_col, **kw):
+    def __init__(self, owner, val_tab, val_col, pop_tab, pop_col, tool_tip=None, **kw):
         super().__init__(owner, val_tab, val_col)
 
         self.pop_tab = pop_tab
@@ -207,6 +241,8 @@ class formCombobox(_form_widget_base):
         self.populate()
         self.widget.grid()
         self.widget.bind("<<ComboboxSelected>>", self._bind_key)
+        if not tool_tip is None:
+            self.tool_tip = toolTip(self, tool_tip)
 
     def getter(self):
         value = self._read_value()
@@ -231,12 +267,14 @@ class formCombobox(_form_widget_base):
 
 class formDynamicLabel(_form_widget_base):
 
-    def __init__(self, owner, table, column, **kw):
+    def __init__(self, owner, table, column, tool_tip=None, **kw):
         super().__init__(owner, table, column)
 
         self.value = tk.StringVar(self)
         self.widget = tk.Label(self, textvariable=self.value, **kw)
         self.widget.grid()
+        if not tool_tip is None:
+            self.tool_tip = toolTip(self, tool_tip)
 
     def setter(self):
         value = self.data.read_single_value(self.table, self.column, self.row_id)
@@ -247,7 +285,7 @@ class formDynamicLabel(_form_widget_base):
 
 class formIndirectLabel(_form_widget_base):
 
-    def __init__(self, owner, val_tab, val_col, rem_tab, rem_col, **kw):
+    def __init__(self, owner, val_tab, val_col, rem_tab, rem_col, tool_tip=None, **kw):
         super().__init__(owner, val_tab, val_col)
 
         self.rem_tab = rem_tab
@@ -256,6 +294,8 @@ class formIndirectLabel(_form_widget_base):
         self.value = tk.StringVar(self)
         self.widget = tk.Label(self, textvariable=self.value, **kw)
         self.widget.grid()
+        if not tool_tip is None:
+            self.tool_tip = toolTip(self, tool_tip)
 
     def getter(self):
         # This is the name
@@ -289,12 +329,14 @@ class formTitle(_form_widget_base):
 
 class formCheckbox(_form_widget_base):
 
-    def __init__(self, owner, table, column, **kw):
+    def __init__(self, owner, table, column, tool_tip=None, **kw):
         super().__init_(owner, table, column)
 
         self.value = tk.BooleanVar()
         self.widget = tk.Checkbutton(self, var=self.value, command=self._bind_key, **kw)
         self.widget.grid()
+        if not tool_tip is None:
+            self.tool_tip = toolTip(self, tool_tip)
 
     def getter(self):
         val = self._read_value()
